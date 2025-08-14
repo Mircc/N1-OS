@@ -62,16 +62,13 @@ jobs:
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
 
-        # 获取 OpenWrt 版本号（兼容 24.10）
-        if [ -f include/version.mk ]; then
-            OPENWRT_VER=$(grep -E "VERSION_NUMBER" include/version.mk | sed -E 's/.*:=\s*//;s/["'\'' ]//g')
-            # 如果是变量引用，则从 .config 或 version 文件读取
-            if [[ "$OPENWRT_VER" =~ ^\$\(.+\)$ ]]; then
-                if [ -f .config ]; then
-                    OPENWRT_VER=$(grep -E "^CONFIG_VERSION_NUMBER=" .config | cut -d'"' -f2)
-                fi
-                [ -z "$OPENWRT_VER" ] && [ -f version ] && OPENWRT_VER=$(cat version)
-            fi
+        # 确保 .config 存在
+        [ ! -f .config ] && make defconfig >/dev/null 2>&1
+
+        # 获取 OpenWrt 版本号（使用 make 解析变量）
+        OPENWRT_VER=$(make -s -C ./ -f include/toplevel.mk print-VERSION_NUMBER 2>/dev/null)
+        if [ -z "$OPENWRT_VER" ] && [ -f version ]; then
+            OPENWRT_VER=$(cat version)
         fi
         [ -z "$OPENWRT_VER" ] && OPENWRT_VER="unknown"
 
@@ -136,7 +133,7 @@ jobs:
         EOF
 
         # 防火墙判断
-        if [[ "$OPENWRT_VER" =~ ^24\. || "$OPENWRT_VER" =~ ^23\. || "$OPENWRT_VER" =~ ^22\.03 ]]; then
+        if [[ -n "$OPENWRT_VER" && ("$OPENWRT_VER" =~ ^24\. || "$OPENWRT_VER" =~ ^23\. || "$OPENWRT_VER" =~ ^22\.03) ]]; then
             echo "✅ 检测到 OpenWrt $OPENWRT_VER - 启用 Firewall4（nftables）"
             sed -i '/CONFIG_PACKAGE_firewall=/d' .config
             echo "CONFIG_PACKAGE_firewall4=y" >> .config
