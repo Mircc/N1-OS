@@ -62,24 +62,32 @@ jobs:
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
 
-        # 获取 OpenWrt 版本号和编译日期
+        # 获取 OpenWrt 版本号（兼容 24.10）
         if [ -f include/version.mk ]; then
-            OPENWRT_VER=$(grep -E "VERSION_NUMBER" include/version.mk | sed -E 's/.*:=\s*//;s/[^0-9\.].*//')
-            echo "=============================================="
-            echo " 当前源码 OpenWrt 版本号: $OPENWRT_VER"
-            echo " 源码路径: $(pwd)"
-            echo "=============================================="
-        else
-            echo "⚠ 未找到 include/version.mk，无法检测版本号"
-            OPENWRT_VER="unknown"
+            OPENWRT_VER=$(grep -E "VERSION_NUMBER" include/version.mk | sed -E 's/.*:=\s*//;s/["'\'' ]//g')
+            # 如果是变量引用，则从 .config 或 version 文件读取
+            if [[ "$OPENWRT_VER" =~ ^\$\(.+\)$ ]]; then
+                if [ -f .config ]; then
+                    OPENWRT_VER=$(grep -E "^CONFIG_VERSION_NUMBER=" .config | cut -d'"' -f2)
+                fi
+                [ -z "$OPENWRT_VER" ] && [ -f version ] && OPENWRT_VER=$(cat version)
+            fi
         fi
+        [ -z "$OPENWRT_VER" ] && OPENWRT_VER="unknown"
+
         BUILD_DATE=$(date +%Y%m%d)
+        echo "=============================================="
+        echo " 当前源码 OpenWrt 版本号: $OPENWRT_VER"
+        echo " 源码路径: $(pwd)"
+        echo "=============================================="
         echo "OPENWRT_VER=$OPENWRT_VER" >> $GITHUB_ENV
         echo "PACKAGED_OUTPUTDATE=$BUILD_DATE" >> $GITHUB_ENV
 
         # 品牌修改为 N1_OS
         sed -i "s|DISTRIB_ID='ImmortalWrt'|DISTRIB_ID='N1_OS'|g" package/base-files/files/etc/openwrt_release
-        sed -i "s|DISTRIB_RELEASE='.*'|DISTRIB_RELEASE='${OPENWRT_VER}'|g" package/base-files/files/etc/openwrt_release
+        if [ -n "$OPENWRT_VER" ]; then
+            sed -i "s|DISTRIB_RELEASE='.*'|DISTRIB_RELEASE='${OPENWRT_VER//\//\\/}'|g" package/base-files/files/etc/openwrt_release
+        fi
         sed -i "s|ImmortalWrt|N1_OS|g" package/base-files/files/etc/banner
         sed -i "s|OpenWrt|N1_OS|g" package/base-files/files/etc/banner
 
@@ -89,9 +97,9 @@ jobs:
           sed -i "s|OpenWrt|N1_OS|g" "$LUCI_CFG"
         }
 
-        FILES_LIST=$(find feeds/luci/modules/luci-base/po -type f -name "*.po")
-        [ -n "$FILES_LIST" ] && sed -i "s|ImmortalWrt|N1_OS|g" $FILES_LIST
-        [ -n "$FILES_LIST" ] && sed -i "s|OpenWrt|N1_OS|g" $FILES_LIST
+        # 批量替换 po 文件
+        find feeds/luci/modules/luci-base/po -type f -name "*.po" -print0 | xargs -0 sed -i "s|ImmortalWrt|N1_OS|g"
+        find feeds/luci/modules/luci-base/po -type f -name "*.po" -print0 | xargs -0 sed -i "s|OpenWrt|N1_OS|g"
 
         LOGIN_VIEW="feeds/luci/themes/luci-theme-bootstrap/luasrc/view/themes/bootstrap/sysauth.htm"
         [ -f "$LOGIN_VIEW" ] && {
@@ -135,7 +143,7 @@ jobs:
             echo "# CONFIG_PACKAGE_firewall is not set" >> .config
             echo "CONFIG_PACKAGE_kmod-nft-tproxy=y" >> .config
         else
-            echo "⚠ 检测到 OpenWrt $OPENWRT_VER - 使用 Firewall3（iptables）"
+            echo "✅ 保持 Firewall3 并启用 iptables-mod-tproxy"
             sed -i '/CONFIG_PACKAGE_firewall4=/d' .config
             echo "CONFIG_PACKAGE_firewall=y" >> .config
             echo "CONFIG_PACKAGE_iptables-mod-tproxy=y" >> .config
