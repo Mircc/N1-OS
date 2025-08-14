@@ -1,4 +1,4 @@
-name: Build OpenWRT-IMM for N1
+name: Build IMM for N1OS
 
 on:
   workflow_dispatch:
