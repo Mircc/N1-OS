@@ -1,4 +1,4 @@
-name: Build IMM for N1OS
+name: Build OpenWRT-IMM for N1
 
 on:
   workflow_dispatch:
@@ -120,10 +120,6 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_SH
 
-    # - name: SSH connect to Actions
-      # uses: P3TERX/ssh2actions@main
-      # if: (github.event.inputs.ssh == 'true') || contains(github.event.action, 'ssh')
-
     - name: Download package
       working-directory: ./openwrt
       run: |
@@ -131,6 +127,44 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+
+    - name: Detect OpenWrt version, set brand and date
+      run: |
+        # 提取版本号
+        OPENWRT_VER=$(grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' openwrt/include/version.mk | head -n1)
+        BUILD_DATE=$(date +%Y%m%d)
+        echo "OPENWRT_VER=$OPENWRT_VER" >> $GITHUB_ENV
+        echo "PACKAGED_OUTPUTDATE=$BUILD_DATE" >> $GITHUB_ENV
+
+        # 修改系统品牌和版本
+        sed -i "s/DISTRIB_ID='ImmortalWrt'/DISTRIB_ID='N1_OS'/g" openwrt/package/base-files/files/etc/openwrt_release
+        sed -i "s/DISTRIB_RELEASE='.*'/DISTRIB_RELEASE='${OPENWRT_VER}'/g" openwrt/package/base-files/files/etc/openwrt_release
+        sed -i "s/ImmortalWrt/N1_OS/g" openwrt/package/base-files/files/etc/banner
+
+        # 修改 LuCI 网页标题
+        LUCI_CFG="openwrt/feeds/luci/modules/luci-base/root/etc/config/luci"
+        if [ -f "$LUCI_CFG" ]; then
+          sed -i "s/ImmortalWrt/N1_OS/g" "$LUCI_CFG"
+          sed -i "s/OpenWrt/N1_OS/g" "$LUCI_CFG"
+        fi
+
+        # 修改 LuCI 全部语言包
+        find openwrt/feeds/luci/modules/luci-base/po -type f -name "*.po" -exec sed -i "s/ImmortalWrt/N1_OS/g" {} \;
+        find openwrt/feeds/luci/modules/luci-base/po -type f -name "*.po" -exec sed -i "s/OpenWrt/N1_OS/g" {} \;
+
+        # 修改 LuCI 登录页面 Logo 文字
+        LOGIN_VIEW="openwrt/feeds/luci/themes/luci-theme-bootstrap/luasrc/view/themes/bootstrap/sysauth.htm"
+        if [ -f "$LOGIN_VIEW" ]; then
+          sed -i 's/ImmortalWrt/N1_OS/g' "$LOGIN_VIEW"
+          sed -i 's/OpenWrt/N1_OS/g' "$LOGIN_VIEW"
+        fi
+
+        echo "=============================================="
+        echo " 固件品牌: N1_OS"
+        echo " OpenWrt 版本号: $OPENWRT_VER"
+        echo " 编译日期: $BUILD_DATE"
+        echo " LuCI 界面与登录页已改为 N1_OS"
+        echo "=============================================="
 
     - name: Compile the firmware
       run: |
@@ -156,15 +190,18 @@ jobs:
       uses: ncipollo/release-action@main
       if: ${{ env.PACKAGED_STATUS == 'success' }} && !cancelled()
       with:
-        tag: immortalwrt_N1_${{ env.PACKAGED_OUTPUTDATE }}
+        tag: N1_OS_${{ env.OPENWRT_VER }}_${{ env.PACKAGED_OUTPUTDATE }}
         artifacts: /opt/openwrt_packit/output/*
         allowUpdates: true
         token: ${{ secrets.GITHUB_TOKEN }}
         body: |
-          基于immortalwrt openwrt构建
+          基于 ImmortalWrt 构建
           首次使用建议全新刷写
           * 基本信息
-          IP: 192.168.50.200
+          固件品牌: N1_OS
+          OpenWrt 版本: ${{ env.OPENWRT_VER }}
+          编译日期: ${{ env.PACKAGED_OUTPUTDATE }}
+          IP: 192.168.2.2
           账户: root
           密码: 空
           
