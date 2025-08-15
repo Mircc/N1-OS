@@ -160,7 +160,7 @@ jobs:
           固件品牌: N1_OS
           OpenWrt 版本: ${{ env.OPENWRT_VER }}
           编译日期: ${{ env.PACKAGED_OUTPUTDATE }}
-          IP: 192.168.2.2
+          IP: 192.168.50.200
           账户: root
           密码: password
 
