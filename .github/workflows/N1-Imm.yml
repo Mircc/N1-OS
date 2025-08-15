@@ -58,18 +58,19 @@ jobs:
 
     - name: Update & Install feeds
       run: |
-        chmod +x $DIY_SH
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-        $GITHUB_WORKSPACE/$DIY_SH
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
 
-    - name: Load custom config
+    - name: Load custom config & run diy
       run: |
         [ -e $FILES ] && mv $FILES openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_SH
+        # 锁定配置，防止主题等被覆盖
+        make defconfig
 
     - name: Branding for N1_OS
       run: |
@@ -83,7 +84,6 @@ jobs:
     - name: Download package
       working-directory: ./openwrt
       run: |
-        make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
