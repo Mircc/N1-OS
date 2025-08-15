@@ -31,7 +31,7 @@ git clone --depth=1 --filter=blob:none --sparse https://github.com/vernesong/Ope
 cd clone/openclash && git sparse-checkout set luci-app-openclash && cd ../..
 cp -rf clone/openclash/luci-app-openclash feeds/luci/applications/
 
-# 主题
+# 主题（拉取最新 Argon 主题和配置插件）
 git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon || exit 1
 git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config || exit 1
 
@@ -41,7 +41,7 @@ git clone --depth=1 https://github.com/sbwml/luci-app-openlist2.git package/open
 # 清理临时克隆目录
 rm -rf clone
 
-# ============ 在 .config 中追加插件/依赖/分区设置 ============
+# ============ 在 .config 中追加插件/依赖/分区/主题设置 ============
 cat >> .config <<EOF
 # 必要依赖
 CONFIG_PACKAGE_ca-bundle=y
@@ -61,6 +61,7 @@ CONFIG_PACKAGE_luci-app-mosdns=y
 # 主题
 CONFIG_PACKAGE_luci-theme-argon=y
 CONFIG_PACKAGE_luci-app-argon-config=y
+CONFIG_LUCI_THEME="argon"
 
 # OpenClash
 CONFIG_PACKAGE_luci-app-openclash=y
@@ -69,3 +70,19 @@ CONFIG_PACKAGE_luci-app-openclash=y
 CONFIG_TARGET_KERNEL_PARTSIZE=64
 CONFIG_TARGET_ROOTFS_PARTSIZE=2048
 EOF
+
+# ============ 强制设置默认主题为 Argon ============
+# 修改默认设置文件（存在才修改，不存在则跳过）
+if [ -f package/lean/default-settings/files/zzz-default-settings ]; then
+    sed -i "s/luci.main.mediaurlbase=.*/luci.main.mediaurlbase='\/luci-static\/argon'/" package/lean/default-settings/files/zzz-default-settings
+fi
+
+# 如果使用其他源码，尝试直接创建默认主题设置
+mkdir -p package/base-files/files/etc/uci-defaults
+cat > package/base-files/files/etc/uci-defaults/99-default-theme <<'EOT'
+#!/bin/sh
+uci set luci.main.mediaurlbase='/luci-static/argon'
+uci commit luci
+exit 0
+EOT
+chmod +x package/base-files/files/etc/uci-defaults/99-default-theme
