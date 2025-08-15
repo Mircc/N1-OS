@@ -34,7 +34,6 @@ git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-
 
 #主题
 git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
-git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 
 # ============ 添加 luci-app-openlist2 + 核心程序 ============
 git clone --depth=1 https://github.com/sbwml/luci-app-openlist2.git package/openlist
