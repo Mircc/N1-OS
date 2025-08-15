@@ -31,10 +31,42 @@ rm -rf feeds/luci/applications/luci-app-passwall
 git clone https://github.com/xiaorouji/openwrt-passwall package/passwall-luci
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2
 # passwall相关结束
-#主题
 
+#主题
 git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
+
+# ============ 添加 luci-app-openlist2 + 核心程序 ============
+git clone --depth=1 https://github.com/sbwml/luci-app-openlist2.git package/openlist
 
 # Clean packages
 rm -rf clone
+
+# ============ 在 .config 中开启插件/Overlay大小 ============
+cat >> .config <<EOF
+# OpenList 核心 + LuCI
+CONFIG_PACKAGE_openlist=y
+CONFIG_PACKAGE_luci-app-openlist2=y
+
+#passwall
+CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-mosdns=y
+#themes
+CONFIG_PACKAGE_luci-theme-argon=y
+CONFIG_PACKAGE_luci-app-argon-config=y
+
+# OpenClash 主程序
+CONFIG_PACKAGE_luci-app-openclash=y
+
+
+# 必要依赖
+CONFIG_PACKAGE_ca-bundle=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_ipset=y
+CONFIG_PACKAGE_iptables-mod-extra=y
+CONFIG_PACKAGE_kmod-tun=y
+
+# 固件分区设置（内核64MB，RootFS 2048MB）
+CONFIG_TARGET_KERNEL_PARTSIZE=64
+CONFIG_TARGET_ROOTFS_PARTSIZE=2048
+EOF
