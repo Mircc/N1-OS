@@ -64,12 +64,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Initialize environment
+- name: Initialize environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
         sudo -E apt update
+        # 安装基础依赖（官方 OpenWrt 推荐）
         sudo -E apt -y install $(curl -fsSL https://is.gd/depends_ubuntu_2204)
+        # 安装额外依赖（你的插件可能用到）
+        sudo -E apt -y install file which libargp-dev libfts-dev libobstack-dev libintl-dev
         sudo -E apt -y autoremove --purge
         sudo -E apt -y install libfuse-dev rename time gn
         sudo -E apt clean
