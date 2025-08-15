@@ -68,12 +68,10 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo -E apt update
-        # 安装官方 OpenWrt 推荐依赖
-        sudo -E apt -y install $(curl -fsSL https://is.gd/depends_ubuntu_2204)
+        sudo -E apt update -o Acquire::Retries=5
+        # 从仓库依赖文件安装
+        sudo -E apt -y install $(curl -fsSL https://raw.githubusercontent.com/Mircc/N1-OS/refs/heads/main/.github/workflows/depends_ubuntu_2204)
         sudo -E apt -y autoremove --purge
-        # 安装额外常用工具
-        sudo -E apt -y install libfuse-dev rename time gn
         sudo -E apt clean
         sudo timedatectl set-timezone "$TZ"
         sudo chown $USER:$GROUPS $GITHUB_WORKSPACE
