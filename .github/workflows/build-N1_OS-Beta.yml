@@ -126,6 +126,34 @@ jobs:
         make download -j8
         find dl -size -1024c -exec rm -f {} \;
 
+    - name: Check prerequisite & auto-update depends list
+      working-directory: ./openwrt
+      run: |
+        echo "=== 检查编译环境依赖 ==="
+        make prereq V=s | tee prereq.log
+        missing=$(grep "failed" prereq.log | awk -F"'" '{print $2}' | sort -u)
+        if [ -n "$missing" ]; then
+          echo "=== 检测到缺失依赖 ==="
+          echo "$missing"
+          cd $GITHUB_WORKSPACE
+          depends_file=".github/workflows/depends_ubuntu_2204"
+          for pkg in $missing; do
+            if ! grep -q "^$pkg$" "$depends_file"; then
+              echo "$pkg" >> "$depends_file"
+              echo "已将 $pkg 添加到依赖文件"
+            fi
+          done
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add "$depends_file"
+          git commit -m "Auto-update depends list: add missing packages"
+          git push
+          echo "=== 依赖文件已更新，请重新运行编译 ==="
+          exit 1
+        else
+          echo "依赖已满足，无需更新"
+        fi
+
     - name: Compile the firmware
       run: |
         chmod -R 755 openwrt
