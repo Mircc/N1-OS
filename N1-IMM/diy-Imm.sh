@@ -1,8 +1,17 @@
 #!/bin/bash
 
 # Add packages
+rm -rf feeds/packages/net/v2ray-geodata
+rm -rf feeds/luci/themes/luci-theme-argon
+rm -rf feeds/luci/applications/luci-app-argon-config
+rm -rf feeds/packages/net/mosdns
+rm -rf feeds/packages/utils/v2dat
+rm -rf feeds/luci/applications/luci-app-mosdns
+
 git clone https://github.com/ophub/luci-app-amlogic --depth=1 clone/amlogic
 cp -rf clone/amlogic/luci-app-amlogic feeds/luci/applications/
+
+git clone -b v5-lua --single-branch --depth 1 https://github.com/sbwml/luci-app-mosdns package/mosdns
 
 # git clone https://github.com/xiaorouji/openwrt-passwall --depth=1 clone/passwall
 # rm -rf feeds/luci/applications/luci-app-passwall
@@ -20,8 +29,12 @@ git clone https://github.com/xiaorouji/openwrt-passwall-packages package/passwal
 # 移除 openwrt feeds 过时的luci版本
 rm -rf feeds/luci/applications/luci-app-passwall
 git clone https://github.com/xiaorouji/openwrt-passwall package/passwall-luci
+git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2
+# passwall相关结束
+#主题
 
-#passwall相关结束
+git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
+git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 
 # Clean packages
 rm -rf clone
