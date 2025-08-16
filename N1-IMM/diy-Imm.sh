@@ -24,7 +24,7 @@ git clone -b v5-lua --single-branch --depth 1 https://github.com/sbwml/luci-app-
 # Passwall & Passwall2
 git clone https://github.com/xiaorouji/openwrt-passwall-packages package/passwall-packages || exit 1
 git clone https://github.com/xiaorouji/openwrt-passwall package/passwall-luci || exit 1
-git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2 || exit 1
+#git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2 || exit 1
 
 # OpenClash（只拉取 luci-app-openclash 子目录）
 git clone --depth=1 --filter=blob:none --sparse https://github.com/vernesong/OpenClash clone/openclash || exit 1
