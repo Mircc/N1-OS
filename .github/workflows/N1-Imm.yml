@@ -63,7 +63,9 @@ jobs:
         sudo rm -rf /usr/local/go
         sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
         echo "/usr/local/go/bin" >> $GITHUB_PATH
-        go version
+
+    - name: Check Go version
+      run: go version
 
     - name: Update & Install feeds
       run: |
