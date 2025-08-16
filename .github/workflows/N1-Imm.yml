@@ -56,6 +56,15 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH --single-branch --depth=1 openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
+    - name: Install Go 1.24
+      run: |
+        GO_VERSION=1.24.0
+        wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+        echo "/usr/local/go/bin" >> $GITHUB_PATH
+        go version
+
     - name: Update & Install feeds
       run: |
         cd openwrt
