@@ -63,9 +63,13 @@ jobs:
         sudo rm -rf /usr/local/go
         sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
         echo "/usr/local/go/bin" >> $GITHUB_PATH
+        echo "GOROOT=/usr/local/go" >> $GITHUB_ENV
 
     - name: Check Go version
-      run: go version
+      run: |
+        export GOROOT=/usr/local/go
+        export PATH=$GOROOT/bin:$PATH
+        go version
 
     - name: Update & Install feeds
       run: |
@@ -80,7 +84,6 @@ jobs:
         chmod +x $DIY_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_SH
-        # 锁定配置，防止主题等被覆盖
         make defconfig
 
     - name: Branding for N1_OS
@@ -101,6 +104,9 @@ jobs:
 
     - name: Compile the firmware
       run: |
+        export GOROOT=/usr/local/go
+        export PATH=$GOROOT/bin:$PATH
+        go version
         chmod -R 755 openwrt
         cd openwrt
         echo -e "$(nproc) thread compile"
