@@ -2,8 +2,8 @@ name: Build OpenWRT-LEAN for N1
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 11 * * *' # 每天 11:30 UTC = 每天 19:30 北京时间 (Asia/Shanghai)
+ # schedule:
+  #  - cron: '30 11 * * *' # 每天 11:30 UTC = 每天 19:30 北京时间 (Asia/Shanghai)
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
